@@ -1,21 +1,23 @@
 package droids;
 
+import game_logic.*;
 import java.util.List;
 
 public class TankDroid extends Droid {
 
     public TankDroid(String name, int teamId, AiMode mode) {
-        // HP: 150, DMG: 15, ARMOR: 10, RANGE: 2 (ближній бій)
-        super(name, 150, 15, 10, 2, teamId, mode);
+        // HP: 350, DMG: 30, ARMOR: 12, RANGE: 2
+        super(name, 350, 30, 12, 2, teamId, mode);
     }
 
     @Override
     public Action decideAction(List<Droid> allies, List<Droid> enemies) {
-        // 1. Захист союзників (Тільки TACTICAL)
+        // 1. Захист союзника (Тільки TACTICAL)
         if (mode == AiMode.TACTICAL) {
-            // Шукаємо союзника поруч, у якого мало HP і немає щита
             for (Droid ally : allies) {
-                if (ally.isAlive() && ally != this && !ally.shieldActive && getDistanceTo(ally) <= this.attackRange) {
+                // Якщо союзник поруч, живий, не я сам, і без щита -> захистити
+                if (ally.isAlive() && ally != this && getDistanceTo(ally) <= this.attackRange) {
+                    // Пріоритет тим, у кого < 50% HP
                     if (ally.getCurrentHealth() < ally.getMaxHealth() * 0.5) {
                         return new ShieldAllyAction(this, ally);
                     }
@@ -23,9 +25,9 @@ public class TankDroid extends Droid {
             }
         }
 
-        // 2. Захист себе (DEFENSIVE)
-        if (mode == AiMode.DEFENSIVE && !this.shieldActive && Math.random() < 0.4) {
-            return new ShieldAction(this);
+        // 2. Власний захист (DefendAction для танка вмикає щит)
+        if (mode == AiMode.DEFENSIVE && Math.random() < 0.4) {
+            return new DefendAction(this);
         }
 
         // 3. Атака
@@ -34,6 +36,6 @@ public class TankDroid extends Droid {
             return new AttackAction(this, target);
         }
 
-        return () -> this.name + " готовий приймати удар.";
+        return new DefendAction(this);
     }
 }

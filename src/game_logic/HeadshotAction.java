@@ -1,4 +1,6 @@
-package droids;
+package game_logic;
+
+import droids.Droid;
 
 public class HeadshotAction implements Action {
     private Droid attacker;
@@ -13,8 +15,8 @@ public class HeadshotAction implements Action {
     public String execute() {
         if (!attacker.isAlive() || !target.isAlive()) return "";
 
-        int massiveDmg = attacker.damage * 2;
-        String log = target.takeDamage(massiveDmg);
-        return "CRITICAL! " + attacker.getName() + " робить ХЕДШОТ по " + log;
+        int critDmg = attacker.getDamage() * 2;
+        String log = target.takeDamage(critDmg);
+        return "CRITICAL! " + attacker.getName() + " робить ХЕДШОТ -> " + log;
     }
 }

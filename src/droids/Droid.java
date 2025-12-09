@@ -1,22 +1,24 @@
 package droids;
 
+import game_logic.Action;
 import java.util.List;
 
+/**
+ * Базовий клас для всіх дроїдів.
+ * Містить спільні характеристики та методи пошуку цілей.
+ */
 public abstract class Droid {
     protected String name;
     protected int maxHealth;
     protected int currentHealth;
     protected int damage;
     protected int armor;
+    protected int attackRange;      // дальність атаки
     protected boolean shieldActive;
 
-    protected int attackRange; // Радіус дії
-
-    protected int x;
-    protected int y;
-
-    protected int teamId;
-    protected AiMode mode;
+    protected int x, y;     // позиція дроїда на полі бою
+    protected int teamId;   // ідентифікатор команди (союзники/вороги)
+    protected AiMode mode;  // режим для дроїда
 
     public Droid(String name, int health, int damage, int armor, int range, int teamId, AiMode mode) {
         this.name = name;
@@ -32,10 +34,12 @@ public abstract class Droid {
 
     public String takeDamage(int amount) {
         int actualDamage = amount - this.armor;
+
         if (this.shieldActive) {
             actualDamage /= 2;
-            this.shieldActive = false;
+            this.shieldActive = false; // Щит збивається після удару
         }
+
         if (actualDamage < 0) actualDamage = 0;
 
         this.currentHealth -= actualDamage;
@@ -45,8 +49,7 @@ public abstract class Droid {
                 this.name, actualDamage, this.currentHealth, this.maxHealth);
     }
 
-    // Метод для воскресіння
-    public void resurrect(int healthAmount) {
+    public void heal(int healthAmount) {
         this.currentHealth = healthAmount;
         if (this.currentHealth > this.maxHealth) this.currentHealth = this.maxHealth;
     }
@@ -55,14 +58,7 @@ public abstract class Droid {
         return currentHealth > 0;
     }
 
-    // --- HELPER METHODS ---
-
-    // Розрахунок відстані (Евклідова або Манхеттенська)
-    public double getDistanceTo(Droid other) {
-        return Math.sqrt(Math.pow(this.x - other.x, 2) + Math.pow(this.y - other.y, 2));
-    }
-
-    // Знайти найслабшого ворога ТІЛЬКИ в радіусі дії
+    // 1. Знайти найслабшого ворога в радіусі дії
     protected Droid findTargetInRange(List<Droid> enemies) {
         Droid bestTarget = null;
         int minHp = Integer.MAX_VALUE;
@@ -78,36 +74,41 @@ public abstract class Droid {
         return bestTarget;
     }
 
-    // Знайти найближчого ворога (щоб рухатись до нього, якщо нікого немає в радіусі)
-    protected Droid findNearestEnemy(List<Droid> enemies) {
-        Droid nearest = null;
-        double minDist = Double.MAX_VALUE;
+    // 2. Знайти найбільш пораненого союзника (для Хілера)
+    protected Droid findMostInjuredAlly(List<Droid> allies) {
+        Droid injured = null;
+        double minPercent = 1.0;
 
-        for (Droid e : enemies) {
-            if (e.isAlive()) {
-                double dist = getDistanceTo(e);
-                if (dist < minDist) {
-                    minDist = dist;
-                    nearest = e;
+        for (Droid a : allies) {
+            if (a.isAlive() && a != this) {
+                double percent = (double) a.getCurrentHealth() / a.getMaxHealth();
+                if (percent < minPercent) {
+                    minPercent = percent;
+                    injured = a;
                 }
             }
         }
-        return nearest;
+        return (minPercent < 1.0) ? injured : null; // Повертає null, якщо всі здорові
+    }
+
+    public double getDistanceTo(Droid other) {
+        return Math.sqrt(Math.pow(this.x - other.x, 2) + Math.pow(this.y - other.y, 2));
     }
 
     public abstract Action decideAction(List<Droid> allies, List<Droid> enemies);
 
-    // --- GETTERS & SETTERS ---
+
     public String getName() { return name; }
     public int getCurrentHealth() { return currentHealth; }
     public int getMaxHealth() { return maxHealth; }
+    public int getDamage() { return damage; }
+    public int getArmor() { return armor; }
+    public int getAttackRange() { return attackRange; }
     public int getTeamId() { return teamId; }
+    public AiMode getMode() { return mode; }
+
     public int getX() { return x; }
     public int getY() { return y; }
     public void setPosition(int x, int y) { this.x = x; this.y = y; }
     public void setShield(boolean active) { this.shieldActive = active; }
-    public void setArmor(int armor) { this.armor = armor; }
-    public int getArmor() { return armor; }
-    public AiMode getMode() { return mode; }
-    public int getAttackRange() { return attackRange; }
 }

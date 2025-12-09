@@ -1,12 +1,13 @@
 package droids;
 
+import game_logic.*;
 import java.util.List;
 
 public class SniperDroid extends Droid {
 
     public SniperDroid(String name, int teamId, AiMode mode) {
-        // HP: 70, DMG: 40, ARMOR: 0, RANGE: 7 (далекобійний!)
-        super(name, 70, 40, 0, 7, teamId, mode);
+        // HP: 200, DMG: 75, ARMOR: 3, RANGE: 7 (Далекобійний)
+        super(name, 200, 75, 3, 7, teamId, mode);
     }
 
     @Override
@@ -14,31 +15,31 @@ public class SniperDroid extends Droid {
         Droid target = findTargetInRange(enemies);
 
         if (target == null) {
-            return () -> this.name + " видивляється ціль у приціл.";
+            // Якщо ворогів немає в радіусі, просто чекаємо (Defend)
+            return new DefendAction(this);
         }
 
-        // Логіка Снайпера
         switch (this.mode) {
             case AGGRESSIVE:
-                // Шанс на хедшот (20%)
-                if (Math.random() < 0.2) {
+                // 20% шанс на хедшот
+                if (Math.random() < 0.3) {
                     return new HeadshotAction(this, target);
                 }
                 break;
 
             case TACTICAL:
-                // Бронебійний постріл (гарантовано пробиває броню)
-                // Це унікальна фішка снайпера в цьому режимі
+                // Пробиває броню
                 return new ArmorPiercingShotAction(this, target);
 
             case DEFENSIVE:
-                // Якщо ворог надто близько (< 3 клітинок), відступати/ховатись
-                if (getDistanceTo(target) < 3) {
-                    return () -> this.name + " намагається розірвати дистанцію!";
+                // Якщо ворог занадто близько (< 4 клітинок) -> піти в захист (імітація відступу)
+                if (getDistanceTo(target) < 4) {
+                    return new DefendAction(this);
                 }
                 break;
         }
 
+        // Звичайна атака, якщо нічого специфічного не спрацювало
         return new AttackAction(this, target);
     }
 }

@@ -1,4 +1,7 @@
-package droids;
+package game_logic;
+
+import droids.TankDroid;
+import droids.Droid;
 
 public class ShieldAllyAction implements Action {
     private TankDroid tank;
@@ -12,7 +15,8 @@ public class ShieldAllyAction implements Action {
     @Override
     public String execute() {
         if (!tank.isAlive() || !targetAlly.isAlive()) return "";
+
         targetAlly.setShield(true);
-        return tank.getName() + " кидає щит на " + targetAlly.getName() + "!";
+        return "🛡 " + tank.getName() + " кидає силовий щит на " + targetAlly.getName() + "!";
     }
 }
