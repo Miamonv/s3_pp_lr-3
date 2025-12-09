@@ -1,8 +1,5 @@
 package droids;
 
-/**
- * Конкретна дія: Атакувати ціль
- */
 public class AttackAction implements Action {
     private Droid attacker;
     private Droid target;
@@ -13,10 +10,11 @@ public class AttackAction implements Action {
     }
 
     @Override
-    public void execute() {
-        if (attacker.isAlive() && target.isAlive()) {
-            System.out.println(attacker.getName() + " атакує " + target.getName() + "!");
-            target.takeDamage(attacker.getDamage());
-        }
+    public String execute() {
+        if (!attacker.isAlive()) return attacker.getName() + " мертвий і не може атакувати.";
+        if (!target.isAlive()) return attacker.getName() + " б'є по корпусу мертвого ворога.";
+
+        String dmgLog = target.takeDamage(attacker.damage);
+        return attacker.getName() + " стріляє в " + dmgLog;
     }
 }

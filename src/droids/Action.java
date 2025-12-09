@@ -4,5 +4,5 @@ package droids;
  *  кожна дія реалізує метод execute(), який виконує певну поведінку
  */
 public interface Action {
-    void execute();
+    String execute();
 }

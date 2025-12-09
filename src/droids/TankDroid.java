@@ -1,21 +1,39 @@
 package droids;
 
+import java.util.List;
+
 public class TankDroid extends Droid {
-    TankDroid(String droidName, int teamId, BehaviorStrategy strategy) {
-        super(droidName, 70, 50, 100, false, teamId, strategy);
+
+    public TankDroid(String name, int teamId, AiMode mode) {
+        // HP: 150, DMG: 15, ARMOR: 10, RANGE: 2 (ближній бій)
+        super(name, 150, 15, 10, 2, teamId, mode);
     }
 
-    void activateShield() {
-        this.shield = true;                                   // дроїд активує щит
-        this.armor += 50;
-    }
+    @Override
+    public Action decideAction(List<Droid> allies, List<Droid> enemies) {
+        // 1. Захист союзників (Тільки TACTICAL)
+        if (mode == AiMode.TACTICAL) {
+            // Шукаємо союзника поруч, у якого мало HP і немає щита
+            for (Droid ally : allies) {
+                if (ally.isAlive() && ally != this && !ally.shieldActive && getDistanceTo(ally) <= this.attackRange) {
+                    if (ally.getCurrentHealth() < ally.getMaxHealth() * 0.5) {
+                        return new ShieldAllyAction(this, ally);
+                    }
+                }
+            }
+        }
 
-    void activateTargetShield(Droid target) {
-        target.shield = true;                                 // дроїд активує щит для союзника
-        target.armor += 30;
-    }
+        // 2. Захист себе (DEFENSIVE)
+        if (mode == AiMode.DEFENSIVE && !this.shieldActive && Math.random() < 0.4) {
+            return new ShieldAction(this);
+        }
 
-    void smash(Droid target) {
-        target.takeDamage(this.damage);                      // дроїд наносить шкоду цілі
+        // 3. Атака
+        Droid target = findTargetInRange(enemies);
+        if (target != null) {
+            return new AttackAction(this, target);
+        }
+
+        return () -> this.name + " готовий приймати удар.";
     }
 }

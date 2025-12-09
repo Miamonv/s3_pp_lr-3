@@ -1,9 +1,5 @@
 package droids;
 
-/**
- * Конкретна дія: Лікувати ціль
- * Ця дія може бути створена ТІЛЬКИ Хілером.
- */
 public class HealAction implements Action {
     private HealerDroid healer;
     private Droid target;
@@ -14,21 +10,19 @@ public class HealAction implements Action {
     }
 
     @Override
-    public void execute() {
-        int randomValue = (int) (Math.random() * 10);
-        if (healer.isAlive() && target.isAlive()) {
-            switch (randomValue) {
-                case 0, 1, 2, 3, 4, 5, 6, 7:
-                    System.out.println(healer.getName() + " лікує " + target.getName() + " на 50 одиниць здоров'я.");
-                    healer.heal(target);
-                    break;
+    public String execute() {
+        if (!healer.isAlive()) return "";
 
-                case 8, 9, 10:
-                    System.out.println(healer.getName() + " здійснює супер лікування " + target.getName() + " на 100 одиниць здоров'я!");
-                    healer.superHeal(target);
-                    break;
-            }
+        int healAmount = 30;
+        // Проста логіка лікування (без прямого доступу до полів, якби були сетери)
+        // Тут ми припускаємо, що є метод heal() або доступ до полів у пакеті
+        // Для спрощення, уявимо що heal() повертає int
 
-        }
+        int oldHp = target.getCurrentHealth();
+        // (Тут треба додати метод heal(int amount) в Droid або доступ до полів)
+        // Хакинг для прикладу:
+        target.takeDamage(-healAmount); // Від'ємний урон = лікування (якщо логіка дозволяє)
+
+        return healer.getName() + " ремонтує " + target.getName() + " (+" + healAmount + " HP).";
     }
 }

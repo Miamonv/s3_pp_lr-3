@@ -3,51 +3,42 @@ package droids;
 import java.util.List;
 
 public class SniperDroid extends Droid {
-    public SniperDroid(String droidName, int teamId, AiMode mode) {
-        super(droidName, 80, 150, 20, false, teamId, mode);
-    }
 
-    void snipe(Droid target) {
-        target.takeDamage(this.damage);                      // дроїд наносить шкоду цілі
-    }
-
-    void headshot(Droid target) {
-        target.takeDamage(this.damage * 2);                  // дроїд наносить подвоєну шкоду цілі
+    public SniperDroid(String name, int teamId, AiMode mode) {
+        // HP: 70, DMG: 40, ARMOR: 0, RANGE: 7 (далекобійний!)
+        super(name, 70, 40, 0, 7, teamId, mode);
     }
 
     @Override
     public Action decideAction(List<Droid> allies, List<Droid> enemies) {
-//        if (enemies.isEmpty()) {
-//            return new WaitAction(this);
-//        }
+        Droid target = findTargetInRange(enemies);
 
+        if (target == null) {
+            return () -> this.name + " видивляється ціль у приціл.";
+        }
+
+        // Логіка Снайпера
         switch (this.mode) {
-            case DEFENSIVE:
-                // якщо здоров'я < 30% - тікати
-                if (this.getCurrentHealthPercent() < 0.3) {
-                    return new DefendAction(this);
-                }
-                // Якщо ні, то він діє АГРЕСИВНО
-
             case AGGRESSIVE:
-            default:
-                // ТВОЯ ІДЕЯ: "атакувати зі слабшим здоров'ям"
-                Droid target = findWeakestEnemy(enemies);
-                if (target != null) {
-                    return new AttackAction(this, target);
+                // Шанс на хедшот (20%)
+                if (Math.random() < 0.2) {
+                    return new HeadshotAction(this, target);
                 }
                 break;
 
-            case SUPPORT:
-                // Снайпер не вміє лікувати, тому просто атакує
-                Droid targetSupport = findWeakestEnemy(enemies);
-                if (targetSupport != null) {
-                    return new AttackAction(this, targetSupport);
+            case TACTICAL:
+                // Бронебійний постріл (гарантовано пробиває броню)
+                // Це унікальна фішка снайпера в цьому режимі
+                return new ArmorPiercingShotAction(this, target);
+
+            case DEFENSIVE:
+                // Якщо ворог надто близько (< 3 клітинок), відступати/ховатись
+                if (getDistanceTo(target) < 3) {
+                    return () -> this.name + " намагається розірвати дистанцію!";
                 }
                 break;
         }
 
-        return new WaitAction(this);
+        return new AttackAction(this, target);
     }
-}
 }
