@@ -1,7 +1,10 @@
 package droids;
-import java.util.List;
-import javax.swing.*;
 
+import java.util.List;
+/**
+ * Базовий абстрактний клас для ВСІХ дроїдів
+ * Об'єднує всі спільні поля та методи
+ */
 public abstract class Droid {
     String name;
     int total_health;
@@ -10,17 +13,19 @@ public abstract class Droid {
     int armor;
     boolean shield;
 
-    int x;  //координати дрона на полі бою
-    int y;
-    int teamId = 0; // ID команди, до якої належить дрон
+    int x, y;  //координати дрона на полі бою
+    int teamId; // ID команди, до якої належить дрон
+    protected AiMode mode;
 
-    Droid(String droidName, int health, int dmg, int armr, boolean shld) {
+    Droid(String droidName, int health, int dmg, int armr, boolean shld, int team, AiMode mode) {
         name = droidName;
         total_health = health;
         current_health = health;
         damage = dmg;
         armor = armr;
         shield = shld;
+        teamId = team;
+        this.mode = mode;
     }
 
     public void takeDamage(int amount) {
@@ -32,8 +37,11 @@ public abstract class Droid {
             if (this.current_health < 0) {
                 this.current_health = 0;
             }
+            System.out.println("  " + this.name + " отримує " + actualDamage + " шкоди (" + this.current_health + "/" + this.total_health + ")");
+        } else {
+            // якщо броня > шкоди, шкода = 0
+            System.out.println("  " + this.name + " блокує атаку!");
         }
-        // якщо броня > шкоди, шкода = 0
     }
 
     public void move(int newX, int newY) {
@@ -45,91 +53,69 @@ public abstract class Droid {
         return this.current_health > 0;
     }
 
-    public int getTeamId() {                 // геттер для ID команди
+    protected Droid findWeakestEnemy(List<Droid> enemies) {
+        Droid weakestEnemy = null;
+        int minHealth = Integer.MAX_VALUE;
+        for (Droid enemy : enemies) {
+            if (enemy.isAlive() && enemy.getCurrentHealth() < minHealth) {
+                minHealth = enemy.getCurrentHealth();
+                weakestEnemy = enemy;
+            }
+        }
+        return weakestEnemy;
+    }
+
+    public double getCurrentHealthPercent() {
+        if (this.total_health == 0) return 0.0;
+        return (double) this.current_health / (double) this.total_health;
+    }
+
+    protected Droid findMostDamagedAlly(List<Droid> allies) {
+        Droid mostWounded = null;
+        double minHealthPercent = 1.0;
+        for (Droid ally : allies) {
+            if (ally.isAlive() && ally.getCurrentHealthPercent() < minHealthPercent) {
+                minHealthPercent = ally.getCurrentHealthPercent();
+                mostWounded = ally;
+            }
+        }
+        // якщо ніхто не поранений (або всі 100%)
+        return (minHealthPercent < 1.0) ? mostWounded : null;
+    }
+
+    public int getTeamId() {
         return teamId;
+    }               // геттер для ID команди
+
+    public String getName() {
+        return name;
+    }
+
+    public int getDamage() {
+        return damage;
+    }
+
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public int getCurrentHealth() {
+        return current_health;
+    }
+
+    public int getTotalHealth() {
+        return total_health;
+    }
+
+    public int getArmor() {
+        return armor;
     }
 
 
-
-    public abstract Action decideAction(List<Droid> allies, List<Droid> enemies);    //!!!!!!!!!!!
+    public abstract Action decideAction(List<Droid> allies, List<Droid> enemies);
 }
 
-class SniperDroid extends Droid {
-    SniperDroid(String droidName, int teamId) {
-        super(droidName, 80, 150, 20, false);
-    }
-
-    void snipe(Droid target) {
-        target.takeDamage(this.damage);                      // дроїд наносить шкоду цілі
-    }
-
-    void headshot(Droid target) {
-        target.takeDamage(this.damage * 2);                  // дроїд наносить подвоєну шкоду цілі
-    }
-
-    @Override
-    public Action decideAction(List<Droid> allies, List<Droid> enemies) {
-        // TODO: Реалізувати справжній AI тут
-        System.out.println("Снайпер думає...");
-        return null; // Поки що нічого не робимо
-    }
-}
-
-class TankDroid extends Droid {
-    TankDroid(String droidName) {
-        super(droidName, 70, 50, 100, false);
-    }
-
-    void activateShield() {
-        this.shield = true;                                   // дроїд активує щит
-        this.armor += 50;
-    }
-
-    void activateTargetShield(Droid target) {
-        target.shield = true;                                 // дроїд активує щит для союзника
-        target.armor += 30;
-    }
-
-    void smash(Droid target) {
-        target.takeDamage(this.damage);                      // дроїд наносить шкоду цілі
-    }
-
-    @Override
-    public Action decideAction(List<Droid> allies, List<Droid> enemies) {
-        // TODO: Реалізувати справжній AI тут
-        System.out.println("Танк думає...");
-        return null;
-    }
-}
-
-class HealerDroid extends Droid {
-
-    HealerDroid(String droidName) {
-        super(droidName, 200, 30, 20, false);
-    }
-
-    void heal(Droid target) {
-        target.current_health += 50;                            // дроїд лікує союзника на 50 одиниць здоров'я
-        if (target.current_health > target.total_health) {
-            target.current_health = target.total_health;        // не перевищує максимальне здоров'я
-        }
-    }
-
-    void superHeal(Droid target) {
-        target.current_health += 100;                           // дроїд лікує союзника на 100 одиниць здоров'я
-        if (target.current_health > target.total_health) {
-            target.current_health = target.total_health;        // не перевищує максимальне здоров'я
-        }
-    }
-
-    void yellAtEnemy(Droid target) {
-        target.takeDamage(this.damage);                         // дроїд наносить шкоду цілі
-    }
-
-    @Override
-    public Action decideAction(List<Droid> allies, List<Droid> enemies) {
-        // TODO: Реалізувати справжній AI тут
-        System.out.println("Хілер думає...");
-        return null;
-    }
-}
